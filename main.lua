@@ -3,6 +3,8 @@ function love.load()
 end
 
 function love.draw()
+	-- TODO: Move to a separate Player class and keep movement logic there
+	-- TODO: Use image instead of polygon
     love.graphics.polygon("fill", x,100, x+100,100, x+50,200)
 end
 
