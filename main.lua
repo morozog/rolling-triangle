@@ -1,5 +1,5 @@
 function love.load()
-	x = 100
+    x = 100
 end
 
 function love.draw()
