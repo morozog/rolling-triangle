@@ -1,6 +1,9 @@
 #Mac stuff
 .DS_Store
 
+#Vscode stuff
+rolling-triangle.code-workspace
+
 # Compiled Lua sources
 luac.out
 
