@@ -14,13 +14,14 @@ function Player:new()
     -- coordinates for drawing the image
     self.x = starting_width
     self.y = love.graphics.getHeight()-starting_height-self.height/2+starting_offset/2
+    self.y_inc = love.graphics.getHeight()-starting_height-starting_size
     -- image center offset
     self.offset = 15
     self.offset_increment = 1
     self.timer = 1
 
     --triangle initial parameters
-    self.size = 200
+    self.size = starting_size
     self.c1x = 0
     self.c1y = self.size
     self.c2x = 0
@@ -34,38 +35,44 @@ function Player:new()
     self.c3y=(self.c2x-self.c1x)*math.sin(math.rad(60))+(self.c2y-self.c1y)*math.cos(math.rad(60))+self.c1y
 end
 
-function Player:triangle_update()
-    self.timer = self.timer + 1
-    -- We rotate every ten ticks of the timer
-    if math.mod(self.timer,3)==0 then
-        self.c_angle = self.c_angle +1
-        self.degrees = math.mod(self.c_angle, 120)
-        self.n = math.floor(self.c_angle/120)
-        self.radians = math.rad(self.degrees)
-        if (self.degrees >=0) and (self.degrees <=60) then
-            self.c1x =self.n * self.d + self.size*self.radians 
-            self.c1y = self.size
-            self.c2x = self.n * self.d + self.size * (self.radians - math.sin(self.radians))
-            self.c2y = self.size * (1 - math.cos(self.radians))
-        else
-            self.c1x =self.n * self.d + self.d + self.size * math.sin(math.rad(self.degrees - 60))
-            self.c1y = self.size * math.cos(math.rad(self.degrees - 60))
-            self.c2x = self.n * self.d + self.d + self.size * math.cos(math.rad(210 - self.degrees))
-            self.c2y = self.size * math.sin(math.rad(210 - self.degrees))
-        end
-        self.c3x=(self.c2x-self.c1x)*math.cos(math.rad(60))-(self.c2y-self.c1y)*math.sin(math.rad(60))+self.c1x
-        self.c3y=(self.c2x-self.c1x)*math.sin(math.rad(60))+(self.c2y-self.c1y)*math.cos(math.rad(60))+self.c1y
+function Player:triangle_update(inc)
+    -- determining the location of the three vertices of the triangle by the rotation degree
+    self.c_angle = self.c_angle + inc
+    self.degrees = math.mod(self.c_angle, 120)
+    self.n = math.floor(self.c_angle/120)
+    self.radians = math.rad(self.degrees)
+    if (self.degrees >=0) and (self.degrees <=60) then
+        self.c1x =self.n * self.d + self.size*self.radians 
+        self.c1y = self.size
+        self.c2x = self.n * self.d + self.size * (self.radians - math.sin(self.radians))
+        self.c2y = self.size * (1 - math.cos(self.radians))
+    else
+        self.c1x =self.n * self.d + self.d + self.size * math.sin(math.rad(self.degrees - 60))
+        self.c1y = self.size * math.cos(math.rad(self.degrees - 60))
+        self.c2x = self.n * self.d + self.d + self.size * math.cos(math.rad(210 - self.degrees))
+        self.c2y = self.size * math.sin(math.rad(210 - self.degrees))
     end
+    self.c3x=(self.c2x-self.c1x)*math.cos(math.rad(60))-(self.c2y-self.c1y)*math.sin(math.rad(60))+self.c1x
+    self.c3y=(self.c2x-self.c1x)*math.sin(math.rad(60))+(self.c2y-self.c1y)*math.cos(math.rad(60))+self.c1y
 end 
 
 function Player:update(dt)
-    self:rotation_poc_timer()
-    self:triangle_update()
+    --self:rotation_poc_timer()
+
+    if love.keyboard.isDown("left") then
+        self:triangle_update(-1* self.speed * dt)
+    elseif love.keyboard.isDown("right") then
+        self:triangle_update( self.speed * dt)
+    end
+
+    
 end
 
 function Player:draw()
-    love.graphics.draw(self.image, self.x, self.y, math.rad(self.angle), 1,1, self.width/2, self.height/2+self.offset)
-    love.graphics.polygon("line", self.c1x, self.c1y, self.c2x, self.c2y,self.c3x, self.c3y)
+    -- love.graphics.draw(self.image, self.x, self.y, math.rad(self.angle), 1,1, self.width/2, self.height/2+self.offset)
+    love.graphics.polygon("line", self.c1x, self.y_inc +self.c1y, 
+        self.c2x, self.y_inc +self.c2y,
+        self.c3x, self.y_inc +self.c3y)
 end
 
 -- POC function to test the rotation of the image with center offset
