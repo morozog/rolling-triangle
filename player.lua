@@ -3,46 +3,94 @@ Player = Object:extend()
 
 function Player:new()
     -- getting the image with the constant center
-    self.image = love.graphics.newImage("gfx/triangle_centered.png")
+    self.image = love.graphics.newImage("gfx/triangle.png")
     -- setting initial dimensions
     self.speed = starting_speed
+    -- image dimensions
     self.width = self.image:getWidth() 
     self.height = self.image:getHeight()
+    -- image rotation angle
     self.angle = 0
+    -- coordinates for drawing the image
     self.x = starting_width
-    self.y = love.graphics.getHeight()-starting_height-self.height/2+starting_offset
-    self.offset = 1
+    self.y = love.graphics.getHeight()-starting_height-self.height/2+starting_offset/2
+    -- image center offset
+    self.offset = 15
     self.offset_increment = 1
+    self.timer = 1
+
+    --triangle initial parameters
+    self.size = 200
+    self.c1x = 0
+    self.c1y = self.size
+    self.c2x = 0
+    self.c2y = 0
+    self.c_angle = 0
+    self.d = 2 * math.pi * self.size/6
+    self.degrees = 0
+    self.radians = 0
+    self.n = 0
+    self.c3x=(self.c2x-self.c1x)*math.cos(math.rad(60))-(self.c2y-self.c1y)*math.sin(math.rad(60))+self.c1x
+    self.c3y=(self.c2x-self.c1x)*math.sin(math.rad(60))+(self.c2y-self.c1y)*math.cos(math.rad(60))+self.c1y
 end
 
-function Player:update(dt)
-    if love.keyboard.isDown("left") then
-        -- move the triangle left
-        self.x = self.x - self.speed * dt
-        -- rotat the triangle left
-        self.angle = self.angle - 0.03
-        -- move the triangle up/down match the terrain
-        if self.offset >= starting_offset then
-            self.offset_increment = -1
-        elseif self.offset <= 0 then
-            self.offset_increment = 1
-        end 
-        self.offset = self.offset + self.offset_increment
-    elseif love.keyboard.isDown("right") then
-        -- move the triangle right
-        self.x = self.x + self.speed * dt
-        -- rotate the triangle right
-        self.angle = self.angle + 0.03
-        -- move the triangle up/down to match the terrain
-        if self.offset >= starting_offset then
-            self.offset_increment = 1
-        elseif self.offset <= 0 then
-            self.offset_increment = -1
-        end 
-        self.offset = self.offset - self.offset_increment
+function Player:triangle_update()
+    self.timer = self.timer + 1
+    -- We rotate every ten ticks of the timer
+    if math.mod(self.timer,3)==0 then
+        self.c_angle = self.c_angle +1
+        self.degrees = math.mod(self.c_angle, 120)
+        self.n = math.floor(self.c_angle/120)
+        self.radians = math.rad(self.degrees)
+        if (self.degrees >=0) and (self.degrees <=60) then
+            self.c1x =self.n * self.d + self.size*self.radians 
+            self.c1y = self.size
+            self.c2x = self.n * self.d + self.size * (self.radians - math.sin(self.radians))
+            self.c2y = self.size * (1 - math.cos(self.radians))
+        else
+            self.c1x =self.n * self.d + self.d + self.size * math.sin(math.rad(self.degrees - 60))
+            self.c1y = self.size * math.cos(math.rad(self.degrees - 60))
+            self.c2x = self.n * self.d + self.d + self.size * math.cos(math.rad(210 - self.degrees))
+            self.c2y = self.size * math.sin(math.rad(210 - self.degrees))
+        end
+        self.c3x=(self.c2x-self.c1x)*math.cos(math.rad(60))-(self.c2y-self.c1y)*math.sin(math.rad(60))+self.c1x
+        self.c3y=(self.c2x-self.c1x)*math.sin(math.rad(60))+(self.c2y-self.c1y)*math.cos(math.rad(60))+self.c1y
     end
+end 
+
+function Player:update(dt)
+    self:rotation_poc_timer()
+    self:triangle_update()
 end
 
 function Player:draw()
-    love.graphics.draw(self.image, self.x, self.y-self.offset, self.angle, 1,1, self.width/2, self.height/2)
+    love.graphics.draw(self.image, self.x, self.y, math.rad(self.angle), 1,1, self.width/2, self.height/2+self.offset)
+    love.graphics.polygon("line", self.c1x, self.c1y, self.c2x, self.c2y,self.c3x, self.c3y)
+end
+
+-- POC function to test the rotation of the image with center offset
+function Player:rotation_poc_timer()
+    self.timer = self.timer + 1
+    -- We rotate every ten ticks of the timer
+    if math.mod(self.timer,10)==0 then
+        -- every time we rotate by 60 degrees
+        self.angle = self.angle + 60 
+        if self.angle == 0 then
+            self.offset = 15
+        elseif self.angle == 60 then   
+            self.offset = -15
+        elseif self.angle == 120 then
+            self.offset = -75
+        elseif self.angle == 180 then
+            self.offset = -15
+        elseif self.angle == 240 then   
+            self.offset = -75
+        elseif self.angle == 300 then
+            self.offset = -15
+        elseif self.angle == 360 then
+            self.offset = 15
+            -- after 360, rotation starts again
+            self.angle = 0
+        end
+    end
 end
