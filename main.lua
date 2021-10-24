@@ -13,6 +13,6 @@ function love.update(dt)
 end
 
 function love.draw()
-    player:draw()
+    player:draw(terrain:getHeight())
     terrain:draw()
 end

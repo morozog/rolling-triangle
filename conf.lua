@@ -1,5 +1,3 @@
-starting_height = 50
-starting_width = 300
-starting_speed = 50
-starting_offset = 30 
+starting_terrain_height = 50
+starting_speed = 50 
 starting_size = 200

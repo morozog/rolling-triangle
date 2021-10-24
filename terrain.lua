@@ -2,7 +2,7 @@
 Terrain = Object:extend()
 
 function Terrain:new()
-    self.height = starting_height
+    self.height = starting_terrain_height
     self.color = {.82, .82, .28}
 end
 
@@ -18,4 +18,8 @@ function Terrain:draw()
           self.height
     )
     love.graphics.reset()
+end
+
+function Terrain:getHeight()
+    return self.height
 end

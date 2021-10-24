@@ -3,25 +3,17 @@ Player = Object:extend()
 
 function Player:new()
     -- getting the image with the constant center
-    self.image = love.graphics.newImage("gfx/triangle.png")
-    -- setting initial dimensions
-    self.speed = starting_speed
-    -- image dimensions
-    self.width = self.image:getWidth() 
-    self.height = self.image:getHeight()
-    -- image rotation angle
-    self.angle = 0
-    -- coordinates for drawing the image
-    self.x = starting_width
-    self.y = love.graphics.getHeight()-starting_height-self.height/2+starting_offset/2
-    self.y_inc = love.graphics.getHeight()-starting_height-starting_size
-    -- image center offset
-    self.offset = 15
-    self.offset_increment = 1
-    self.timer = 1
+    self.image = love.graphics.newImage("gfx/triangle_centered.png")
+    self.image_angle = 0
+    self.image_size = self.image:getHeight()
 
-    --triangle initial parameters
+    -- setting initial movement speed
+    self.speed = starting_speed
+
+    -- setting initial triangle parameters
     self.size = starting_size
+
+    --triangle vertices initial parameters
     self.c1x = 0
     self.c1y = self.size
     self.c2x = 0
@@ -31,16 +23,45 @@ function Player:new()
     self.degrees = 0
     self.radians = 0
     self.n = 0
-    self.c3x=(self.c2x-self.c1x)*math.cos(math.rad(60))-(self.c2y-self.c1y)*math.sin(math.rad(60))+self.c1x
-    self.c3y=(self.c2x-self.c1x)*math.sin(math.rad(60))+(self.c2y-self.c1y)*math.cos(math.rad(60))+self.c1y
 end
 
 function Player:triangle_update(inc)
-    -- determining the location of the three vertices of the triangle by the rotation degree
+    -- increasing/decreasing the rotataion degree
     self.c_angle = self.c_angle + inc
+end 
+
+function Player:update(dt)
+    if love.keyboard.isDown("left") then
+        self:triangle_update(-1* self.speed * dt)
+    elseif love.keyboard.isDown("right") then
+        self:triangle_update( self.speed * dt)
+    end
+end
+
+function Player:draw(terrain_height)
+    self:calc_vertices()
+    cur_hi = love.graphics.getHeight()-terrain_height
+    love.graphics.draw(self.image, self.center_x, cur_hi-self.center_y, self.image_angle, 
+        1,1, self.image_size/2,self.image_size/2)
+    love.graphics.polygon("line", self.c1x, cur_hi-self.c1y, 
+        self.c2x,cur_hi-self.c2y,
+        self.c3x,cur_hi-self.c3y)
+
+    -- Debug information 
+    love.graphics.setColor(0, 1, 0, 1)
+    love.graphics.print(string.format("Angle: %s",math.deg(self.image_angle)), 10, 10)
+    love.graphics.print(string.format("x1: %s x2: %s x3: %s Center x: %s",
+        self.c1x, self.c2x, self.c3x, self.center_x), 10, 30)
+    love.graphics.print(string.format("y1: %s y2: %s y3: %s Center y: %s",
+        self.c1y, self.c2y, self.c3y, self.center_y), 10, 50)
+end
+
+function Player:calc_vertices()
+     -- determining the location of the three vertices of the triangle by the rotation degree
     self.degrees = math.mod(self.c_angle, 120)
     self.n = math.floor(self.c_angle/120)
     self.radians = math.rad(self.degrees)
+    self.image_angle = math.rad(math.mod(self.c_angle, 360))
     if (self.degrees >=0) and (self.degrees <=60) then
         self.c1x =self.n * self.d + self.size*self.radians 
         self.c1y = self.size
@@ -54,50 +75,6 @@ function Player:triangle_update(inc)
     end
     self.c3x=(self.c2x-self.c1x)*math.cos(math.rad(60))-(self.c2y-self.c1y)*math.sin(math.rad(60))+self.c1x
     self.c3y=(self.c2x-self.c1x)*math.sin(math.rad(60))+(self.c2y-self.c1y)*math.cos(math.rad(60))+self.c1y
-end 
-
-function Player:update(dt)
-    --self:rotation_poc_timer()
-
-    if love.keyboard.isDown("left") then
-        self:triangle_update(-1* self.speed * dt)
-    elseif love.keyboard.isDown("right") then
-        self:triangle_update( self.speed * dt)
-    end
-
-    
-end
-
-function Player:draw()
-    -- love.graphics.draw(self.image, self.x, self.y, math.rad(self.angle), 1,1, self.width/2, self.height/2+self.offset)
-    love.graphics.polygon("line", self.c1x, self.y_inc +self.c1y, 
-        self.c2x, self.y_inc +self.c2y,
-        self.c3x, self.y_inc +self.c3y)
-end
-
--- POC function to test the rotation of the image with center offset
-function Player:rotation_poc_timer()
-    self.timer = self.timer + 1
-    -- We rotate every ten ticks of the timer
-    if math.mod(self.timer,10)==0 then
-        -- every time we rotate by 60 degrees
-        self.angle = self.angle + 60 
-        if self.angle == 0 then
-            self.offset = 15
-        elseif self.angle == 60 then   
-            self.offset = -15
-        elseif self.angle == 120 then
-            self.offset = -75
-        elseif self.angle == 180 then
-            self.offset = -15
-        elseif self.angle == 240 then   
-            self.offset = -75
-        elseif self.angle == 300 then
-            self.offset = -15
-        elseif self.angle == 360 then
-            self.offset = 15
-            -- after 360, rotation starts again
-            self.angle = 0
-        end
-    end
+    self.center_x = (self.c1x+self.c2x+self.c3x)/3
+    self.center_y = (self.c1y+self.c2y+self.c3y)/3
 end
