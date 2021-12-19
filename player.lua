@@ -37,10 +37,13 @@ function Player:triangle_update(inc)
 end 
 
 function Player:update(dt)
-    local is_down_left, data, duration = Input.down('left')
-    local is_down_right, data, duration = Input.down('right')
-    local rs = Input.duration('right')
-    local ls = Input.duration('left')
+    -- update the position and size of the triangle based on buttons pressed
+    local is_down_left, data, duration = Input.down(key_binding_left)
+    local is_down_right, data, duration = Input.down(key_binding_right)
+    local is_down_grow, data, duration = Input.down(key_binding_grow)
+    local is_down_shrink, data, duration = Input.down(key_binding_shrink)
+    local rs = Input.duration(key_binding_right)
+    local ls = Input.duration(key_binding_left)
     
     if is_down_left then
         assert(data == nil)
@@ -51,14 +54,23 @@ function Player:update(dt)
     else
         self:stabilize(rs,ls)
     end
+
+    if is_down_grow then
+        assert(data == nil)
+        self:triangle_size_change(self.speed * dt)
+    elseif is_down_shrink then 
+        assert(data == nil)
+        self:triangle_size_change(-1 * self.speed * dt)
+    end    
 end
 
 function Player:draw(terrain_height)
+    -- draw a triangle
     self:calc_vertices()
     self:get_active_vertex()
     cur_hi = love.graphics.getHeight()-terrain_height
     love.graphics.draw(self.image, self.center_x, cur_hi-self.center_y, self.image_angle, 
-        1,1, self.image_size/2,self.image_size/2)
+        self.size/starting_size,self.size/starting_size, self.image_size/2,self.image_size/2)
     love.graphics.polygon("line", self.c1x, cur_hi-self.c1y, 
         self.c2x,cur_hi-self.c2y,
         self.c3x,cur_hi-self.c3y)
@@ -97,6 +109,7 @@ function Player:calc_vertices()
 end
 
 function Player:get_active_vertex()
+    -- determining what vertex is the triangle currently stanging on
     cur_angle = math.mod(self.c_angle, 360)
     if((cur_angle >blue_angle-color_angle_interval) and (cur_angle <blue_angle+color_angle_interval)) then
         self.active_vertex  = "blue"
@@ -110,11 +123,25 @@ function Player:get_active_vertex()
 end
 
 function Player:stabilize(rsec,lsec)
+    -- stabilizing the triangle if it is on one of its vertices
     local rs, ls
     if(rsec==nil)then rs=stab_int + 1 else rs=rsec end
     if(lsec==nil)then ls=stab_int + 1 else ls=lsec end
     if((rs>stab_int)and(ls>stab_int))then
-        -- TODO: write the logic for stabilizing the triangle if it is on one of its vertices
-        print("need to stabilize! R:"..rs.." L: "..ls) 
+        cur_angle = math.mod(self.c_angle+starting_angle, 120)
+        if (cur_angle<60-stab_angle_int) or (cur_angle>60+stab_angle_int) then
+            incline = cur_angle - 60
+            if (incline < 0) then 
+                self.c_angle = self.c_angle + rollback_speed
+            else   
+                self.c_angle = self.c_angle - rollback_speed
+            end
+        else 
+        end 
     end
+end
+
+function Player:triangle_size_change(inc)
+    -- grow/shrink a triangle
+    self.size = self.size+inc
 end
