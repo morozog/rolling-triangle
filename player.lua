@@ -144,4 +144,5 @@ end
 function Player:triangle_size_change(inc)
     -- grow/shrink a triangle
     self.size = self.size+inc
+    self.d = 2 * math.pi * self.size/6
 end
