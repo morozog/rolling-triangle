@@ -92,7 +92,7 @@ function Player:calc_vertices()
     self.image_angle = math.rad(math.mod(self.c_angle, 360))
 
     if (self.degrees >=0) and (self.degrees <=60) then
-        self.c1x =self.n * self.d + self.size*self.radians 
+        self.c1x = self.n * self.d + self.size*self.radians 
         self.c1y = self.size
         self.c2x = self.n * self.d + self.size * (self.radians - math.sin(self.radians))
         self.c2y = self.size * (1 - math.cos(self.radians))

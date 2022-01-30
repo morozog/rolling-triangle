@@ -4,7 +4,7 @@ require "key_bindings"
 starting_terrain_height = 50
 
 --! Player parameters
-starting_speed = 50 
+starting_speed = 100 
 starting_size = 200
 blue_angle = 90
 green_angle = 210
