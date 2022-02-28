@@ -6,6 +6,8 @@ function love.load()
     require "terrain"
     require "logger"
 
+    love.window.setMode(800,600)
+
     player = Player()
     terrain = Terrain()
     Input.bind_callbacks()
@@ -16,6 +18,6 @@ function love.update(dt)
 end
 
 function love.draw()
-    player:draw(terrain:getHeight())
     terrain:draw()
+    player:draw(terrain:getHeight())
 end

@@ -4,6 +4,7 @@ Player = Object:extend()
 function Player:new()
     -- getting the image with the constant center
     self.image = love.graphics.newImage("gfx/triangle_centered.png")
+    self.bg = love.graphics.newImage("gfx/background800x600.png")
     self.image_angle = starting_angle   
     self.image_size = self.image:getHeight()
 
@@ -23,6 +24,7 @@ function Player:new()
     self.degrees = 0
     self.radians = 0
     self.n = 0
+    self.camera_pos = 200
 
     -- active vertice starts at none
     self.active_vertex = "none"
@@ -33,7 +35,10 @@ end
 
 function Player:triangle_update(inc)
     -- increasing/decreasing the rotataion degree
-    self.c_angle = self.c_angle + inc
+    self.c_angle = self.c_angle - inc
+    -- increasing/decreasing the camera shift
+    self.camera_pos = self.camera_pos + inc
+    
 end 
 
 function Player:update(dt)
@@ -47,12 +52,12 @@ function Player:update(dt)
     
     if is_down_left then
         assert(data == nil)
-        self:triangle_update(-1* self.speed * dt)
+        self:triangle_update( self.speed * dt)
     elseif is_down_right then
         assert(data == nil)
-        self:triangle_update( self.speed * dt)
+        self:triangle_update(-1* self.speed * dt)
     else
-        self:stabilize(rs,ls)
+    --    self:stabilize(rs,ls)
     end
 
     if is_down_grow then
@@ -66,22 +71,26 @@ end
 
 function Player:draw(terrain_height)
     -- draw a triangle
-    self:calc_vertices()
+    self:calc_vertices_v2()
     self:get_active_vertex()
     cur_hi = love.graphics.getHeight()-terrain_height
-    love.graphics.draw(self.image, self.center_x, cur_hi-self.center_y, self.image_angle, 
-        self.size/starting_size,self.size/starting_size, self.image_size/2,self.image_size/2)
-    love.graphics.polygon("line", self.c1x, cur_hi-self.c1y, 
-        self.c2x,cur_hi-self.c2y,
-        self.c3x,cur_hi-self.c3y)
 
+    love.graphics.draw(self.bg, self.camera_pos-200,0)
     -- Log player details
     self.logger:log(
-        string.format("Angle: %s",math.deg(self.image_angle)),
+        string.format("Image Angle: %s",math.deg(self.image_angle)),
+        string.format("Angle: %s",self.c_angle),
+        string.format("Radius: %s",self.size/2),
         string.format("x1: %s x2: %s x3: %s Center x: %s", self.c1x, self.c2x, self.c3x, self.center_x),
         string.format("y1: %s y2: %s y3: %s Center y: %s", self.c1y, self.c2y, self.c3y, self.center_y),
         self.active_vertex
     )
+    love.graphics.translate(200, 559-self.size)
+    love.graphics.draw(self.image, self.center_x, self.center_y, self.image_angle, 
+        self.size/starting_size,self.size/starting_size, self.image_size/2,self.image_size/2)
+    love.graphics.polygon("line", self.c1x, self.c1y, 
+        self.c2x,self.c2y,
+        self.c3x,self.c3y) 
 end
 
 function Player:calc_vertices()
@@ -106,6 +115,54 @@ function Player:calc_vertices()
     self.c3y=(self.c2x-self.c1x)*math.sin(math.rad(60))+(self.c2y-self.c1y)*math.cos(math.rad(60))+self.c1y
     self.center_x = (self.c1x+self.c2x+self.c3x)/3
     self.center_y = (self.c1y+self.c2y+self.c3y)/3
+end
+
+function Player:calc_vertices_v2()
+    r =  self.size/2
+    self.degrees = math.mod(self.c_angle, 120)
+    self.radians = math.rad(self.degrees)
+    self.image_angle = math.rad(math.mod(self.c_angle, 360))
+
+    self.c1x = r * math.cos(self.radians)
+	self.c1y = r * math.sin(self.radians)
+	
+    self.c2x = r * math.cos(self.radians+math.rad(120))
+	self.c2y = r * math.sin(self.radians+math.rad(120))
+
+    self.c3x=(self.c2x-self.c1x)*math.cos(math.rad(60))-(self.c2y-self.c1y)*math.sin(math.rad(60))+self.c1x
+    self.c3y=(self.c2x-self.c1x)*math.sin(math.rad(60))+(self.c2y-self.c1y)*math.cos(math.rad(60))+self.c1y
+
+    mx = math.min(self.c1x, self.c2x, self.c3x)
+    my = math.min(self.c1y, self.c2y, self.c3y)
+
+    max_x = math.max(self.c1x, self.c2x, self.c3x)
+    max_y = math.max(self.c1y, self.c2y, self.c3y)
+
+    mx_j = 0
+    my_j = 0
+
+    if mx*mx < 0.75*r*r then 
+        mx_j = max_x - math.sqrt(3)*r
+    else 
+        mx_j =  mx
+    end
+    if my*my < 0.75*r*r then
+        my_j = max_y - math.sqrt(3)*r
+    else
+        my_j = my
+    end
+
+    self.c1x = self.c1x - mx_j
+    self.c2x = self.c2x - mx_j
+    self.c3x = self.c3x - mx_j
+
+    self.c1y = self.c1y - my_j
+    self.c2y = self.c2y - my_j
+    self.c3y = self.c3y - my_j
+
+    self.center_x = (self.c1x+self.c2x+self.c3x)/3
+    self.center_y = (self.c1y+self.c2y+self.c3y)/3
+
 end
 
 function Player:get_active_vertex()
